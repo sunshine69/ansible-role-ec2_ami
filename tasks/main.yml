@@ -1,0 +1,4 @@
+---
+
+- { include: create_ami.yml, when: stage != "delete"}
+- { include: delete_ami.yml, when: stage == "delete" }

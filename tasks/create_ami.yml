@@ -1,0 +1,66 @@
+---
+
+- name: Get the sandbox instance for {{env}}-{{app_request}}
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:Name": "{{env}}-v2-{{app_request}}-ami-build"
+      "tag:Environment": "{{env}}"
+      "tag:App": "{{app_request}}"
+  register: ec2
+
+- name: set the instance id fact
+  set_fact:
+    instance_id: "{{ec2.instances[0].id}}"
+
+- name: Launch AMI for {{app_request}}
+  ec2_ami:
+    profile: "{{aws_account_name}}"
+    region: "{{region}}"
+    instance_id: "{{instance_id}}"
+    name: "Env-{{env}}-{{app_request}} {{ ansible_date_time.epoch }}"
+    device_mapping:
+      - device_name: /dev/sda1
+        size: 20
+        delete_on_termination: true
+        volume_type: gp2
+      - device_name: /dev/sdb
+        size: 20
+        delete_on_termination: false
+        volume_type: gp2
+    tags:
+      Name: "{{env}}-{{app_request}}"
+      Environment: "{{env}}"
+      Stream: 2
+  register: instance
+
+- name: create new ami
+  debug: msg="{{instance.image_id}}"
+
+- name: find latest ami for {{env}}
+  ec2_ami_find:
+    region: "{{region}}"
+    profile: "{{ aws_account_name }}"
+    owner: self
+    ami_tags:
+      Name: "{{env}}-{{app_request}}"
+      Environment: "{{env}}"
+    sort: creationDate
+    sort_order: descending
+  register: ami  
+
+- name: latest ami for {{app_request}}
+  debug: msg="{{ami.results[0].ami_id}}"
+
+
+- debug:
+    var: instance_id
+  when: terminate
+  
+- name: Terminating {{env}}-app_request sandbox instance
+  ec2:
+    state: absent
+    instance_ids: "{{instance_id}}"
+  when: terminate
+
+
