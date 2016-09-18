@@ -1,24 +1,36 @@
 ---
 
+- debug: msg="int1-v2-{{app_request}}-ami-build"
+
 - name: Get the sandbox instance for {{env}}-{{app_request}}
   ec2_remote_facts:
+    region: "{{region}}"
+    profile: "{{aws_account_name}}"  
     filters:
       instance-state-name: running
-      "tag:Name": "{{env}}-v2-{{app_request}}-ami-build"
+      "tag:Name": "int1-v2-{{app_request}}-ami-build"
       "tag:Environment": "{{env}}"
       "tag:App": "{{app_request}}"
   register: ec2
 
+# - debug: msg="{{ec2}}"
+# - debug: msg="{{ ansible_date_time.epoch }}"
+
 - name: set the instance id fact
   set_fact:
     instance_id: "{{ec2.instances[0].id}}"
+
+- name: Get epoch time
+  shell: date +'%s'
+  register: epoch
 
 - name: Launch AMI for {{app_request}}
   ec2_ami:
     profile: "{{aws_account_name}}"
     region: "{{region}}"
     instance_id: "{{instance_id}}"
-    name: "Env-{{env}}-{{app_request}} {{ ansible_date_time.epoch }}"
+    name: "Env-{{env}}-{{app_request}} {{ epoch.stdout }}"
+    # name: "Env-{{env}}-{{app_request}}"
     device_mapping:
       - device_name: /dev/sda1
         size: 20
