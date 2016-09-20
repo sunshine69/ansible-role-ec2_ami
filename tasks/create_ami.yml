@@ -63,13 +63,13 @@
 
 - debug: msg="{{ami}}"
 
-- name: latest ami for {{app_request}}
-  debug: msg="{{ami.results[0].ami_id}}"
+# - name: latest ami for {{app_request}}
+#   debug: msg="{{ami.results[0].ami_id}}"
 
 
-- debug:
-    var: instance_id
-  when: terminate
+# - debug:
+#     var: instance_id
+#   when: terminate
   
 - name: Terminating {{env}}-app_request sandbox instance
   ec2:
