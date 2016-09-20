@@ -1,6 +1,6 @@
 ---
 
-- debug: msg="int1-v2-{{app_request}}-ami-build"
+- debug: msg="{{env}}-v2-{{app_request}}-ami-build"
 
 - name: Get the sandbox instance for {{env}}-{{app_request}}
   ec2_remote_facts:
@@ -8,7 +8,7 @@
     profile: "{{aws_account_name}}"  
     filters:
       instance-state-name: running
-      "tag:Name": "int1-v2-{{app_request}}-ami-build"
+      "tag:Name": "{{env}}-v2-{{app_request}}-ami-build"
       "tag:Environment": "{{env}}"
       "tag:App": "{{app_request}}"
   register: ec2
@@ -60,6 +60,8 @@
     sort: creationDate
     sort_order: descending
   register: ami  
+
+- debug: msg="{{ami}}"
 
 - name: latest ami for {{app_request}}
   debug: msg="{{ami.results[0].ami_id}}"
