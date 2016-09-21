@@ -11,14 +11,14 @@
       "tag:Name": "{{env}}-v2-{{app_request}}-ami-build"
       "tag:Environment": "{{env}}"
       "tag:App": "{{app_request}}"
-  register: ec2
+  register: ec2_sandbox
 
 # - debug: msg="{{ec2}}"
 # - debug: msg="{{ ansible_date_time.epoch }}"
 
 - name: set the instance id fact
   set_fact:
-    instance_id: "{{ec2.instances[0].id}}"
+    instance_id: "{{ec2_sandbox.instances[0].id}}"
 
 - name: Get epoch time
   shell: date +'%s'
