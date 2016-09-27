@@ -1,6 +1,4 @@
 ---
-- debug: msg="{{hostvars}}"
-- debug: msg="{{hostvars['sandbox'].release_version}}"
 
 - name: Get the sandbox instance for {{env}}-{{app_request}}
   ec2_remote_facts:
@@ -19,6 +17,14 @@
 - name: set the instance id fact
   set_fact:
     instance_id: "{{ec2_sandbox.instances[0].id}}"
+
+- name: get the drupal version tag
+  uri: url="http://{{ec2_sandbox.instances[0].public_dns_name }}:7000" return_content=yes
+  register: drupal_version
+
+- name: set a fact with the drupal version
+  set_fact: 
+    current_version: "{{drupal_version.json.version | default('undefined')}}"
 
 - name: Get epoch time
   shell: date +'%s'
@@ -43,7 +49,7 @@
       Name: "s2-{{app_request}}"
       App: "{{app_request}}"
       Stream: 2
-      Version: 'get tag from build artefact'
+      Version: "{{current_version | default('undefined') }}"
   register: instance
 
 - name: Newly created ami
