@@ -1,5 +1,4 @@
 ---
-
 - name: Get the sandbox instance for {{env}}-{{app_request}}
   ec2_remote_facts:
     region: "{{region}}"
@@ -29,6 +28,11 @@
 - name: Get epoch time
   shell: date +'%s'
   register: epoch
+
+- name: Send notification message via Slack
+  slack:
+    token: "{{slack.token}}"
+    msg: "Creating new {{app_request}} ami  - Version {{current_version}}"
 
 - name: Create new AMI for {{app_request}}
   ec2_ami:
@@ -79,4 +83,7 @@
     instance_ids: "{{instance_id}}"
   when: terminate
 
-
+- name: Send notification message via Slack
+  slack:
+    token: "{{slack.token}}"
+    msg: "New AMI created"
