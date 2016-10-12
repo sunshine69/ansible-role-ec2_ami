@@ -10,9 +10,6 @@
       "tag:App": "{{app_request}}"
   register: ec2_sandbox
 
-# - debug: msg="{{ec2}}"
-# - debug: msg="{{ ansible_date_time.epoch }}"
-
 - name: set the instance id fact
   set_fact:
     instance_id: "{{ec2_sandbox.instances[0].id}}"
@@ -20,10 +17,12 @@
 - name: get the drupal version tag
   uri: url="http://{{ec2_sandbox.instances[0].public_dns_name }}:7000" return_content=yes
   register: drupal_version
+  when: app_request == 'drupal'
 
 - name: set a fact with the drupal version
   set_fact: 
     current_version: "{{drupal_version.json.version | default('undefined')}}"
+  when: app_request == 'drupal'
 
 - name: Get epoch time
   shell: date +'%s'
@@ -32,8 +31,9 @@
 - name: Send notification message via Slack
   slack:
     token: "{{slack.token}}"
-    msg: "Creating new {{app_request}} ami  - Version {{current_version}}"
-
+    msg: "Creating new {{app_request}} ami  - Version {{current_version |default('undefined')}}"
+  when: app_request == 'drupal'
+  
 - name: Create new AMI for {{app_request}}
   ec2_ami:
     profile: "{{aws_account_name}}"
@@ -45,10 +45,10 @@
         size: 20
         delete_on_termination: true
         volume_type: gp2
-      - device_name: /dev/sdb
-        size: 20
-        delete_on_termination: false
-        volume_type: gp2
+      # - device_name: /dev/sdb
+      #   size: 20
+      #   delete_on_termination: false
+      #   volume_type: gp2
     tags:
       Name: "s2-{{app_request}}"
       App: "{{app_request}}"
