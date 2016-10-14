@@ -50,6 +50,7 @@
       #   delete_on_termination: false
       #   volume_type: gp2
     tags:
+      Environment: "{{env}}"
       Name: "s2-{{app_request}}"
       App: "{{app_request}}"
       Stream: 2
