@@ -27,6 +27,7 @@
 - name: Get epoch time
   shell: date +'%s'
   register: epoch
+  changed_when: false
 
 - name: Send notification message via Slack
   slack:
