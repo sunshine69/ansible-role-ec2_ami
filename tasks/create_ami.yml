@@ -1,13 +1,13 @@
 ---
-- name: Get the sandbox instance for {{env}}-{{app_request}}
+- name: Get the sandbox instance for {{ env }}-{{ role_type }}
   ec2_remote_facts:
     region: "{{region}}"
-    profile: "{{aws_account_name}}"  
+    profile: "{{aws_account_name}}"
     filters:
       instance-state-name: running
-      "tag:Name": "s2-master-ami-{{app_request}}"
+      "tag:Name": "s2-master-ami-{{ role_type }}"
       "tag:Stream": 2
-      "tag:App": "{{app_request}}"
+      "tag:App": "{{ role_type }}"
   register: ec2_sandbox
 
 - name: set the instance id fact
@@ -17,12 +17,12 @@
 - name: get the drupal version tag
   uri: url="http://{{ec2_sandbox.instances[0].public_dns_name }}:7000" return_content=yes
   register: drupal_version
-  when: app_request == 'drupal'
+  when: role_type == 'drupal'
 
 - name: set a fact with the drupal version
-  set_fact: 
+  set_fact:
     current_version: "{{drupal_version.json.version | default('undefined')}}"
-  when: app_request == 'drupal'
+  when: role_type == 'drupal'
 
 - name: Get epoch time
   shell: date +'%s'
@@ -32,15 +32,15 @@
 - name: Send notification message via Slack
   slack:
     token: "{{slack.token}}"
-    msg: "Creating new {{app_request}} ami  - Version {{current_version |default('undefined')}}"
-  when: app_request == 'drupal'
-  
-- name: Create new AMI for {{app_request}}
+    msg: "Creating new {{ role_type }} ami  - Version {{current_version |default('undefined')}}"
+  when: role_type == 'drupal'
+
+- name: Create new AMI for {{ role_type }}
   ec2_ami:
     profile: "{{aws_account_name}}"
     region: "{{region}}"
     instance_id: "{{instance_id}}"
-    name: "s2-{{app_request}} {{ epoch.stdout }}"
+    name: "s2-{{ role_type }} {{ epoch.stdout }}"
     device_mapping:
       - device_name: /dev/sda1
         size: 20
@@ -51,9 +51,9 @@
       #   delete_on_termination: false
       #   volume_type: gp2
     tags:
-      Environment: "{{env}}"
-      Name: "s2-{{app_request}}"
-      App: "{{app_request}}"
+      Environment: "{{ env }}"
+      Name: "s2-{{ role_type }}"
+      App: "{{ role_type }}"
       Stream: 2
       Version: "{{current_version | default('undefined') }}"
   register: instance
@@ -61,25 +61,25 @@
 - name: Newly created ami
   debug: msg="{{instance.image_id}}"
 
-- name: find latest ami for {{env}}
+- name: find latest ami for {{ env }}
   ec2_ami_find:
     region: "{{region}}"
     profile: "{{ aws_account_name }}"
     owner: self
     ami_tags:
-      Name: "s2-{{app_request}}"
-      App: "{{app_request}}"
+      Name: "s2-{{ role_type }}"
+      App: "{{ role_type }}"
       Stream: 2
       Version: 'get tag from build artefact'
     sort: creationDate
     sort_order: descending
-  # register: ami  
+  # register: ami
 
 
-# - name: latest ami for {{app_request}}
+# - name: latest ami for {{ role_type }}
 #   debug: msg="{{ami.results[0].ami_id}}"
-  
-- name: Terminating {{env}}-app_request sandbox instance
+
+- name: Terminating {{ env }}-role_type sandbox instance
   ec2:
     state: absent
     instance_ids: "{{instance_id}}"
