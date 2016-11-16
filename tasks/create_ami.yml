@@ -14,15 +14,15 @@
   set_fact:
     instance_id: "{{ec2_sandbox.instances[0].id}}"
 
-- name: get the drupal version tag
-  uri: url="http://{{ec2_sandbox.instances[0].public_dns_name }}:7000" return_content=yes
+- name: get the drupal version tag when we build role image
+  uri: url="http://{{ ec2_sandbox.instances[0].public_dns_name }}:7000" return_content=yes
   register: drupal_version
-  when: role_type == 'drupal'
+  when: role_type == 'drupal' and base_image_version is not defined
 
 - name: set a fact with the drupal version
   set_fact:
     current_version: "{{drupal_version.json.version | default('undefined')}}"
-  when: role_type == 'drupal'
+  when: role_type == 'drupal' and base_image_version is not defined
 
 - name: Get epoch time
   shell: date +'%s'
@@ -35,31 +35,64 @@
     msg: "Creating new {{ role_type }} ami  - Version {{current_version |default('undefined')}}"
   when: role_type == 'drupal'
 
-- name: Create new AMI for {{ role_type }}
-  ec2_ami:
-    profile: "{{aws_account_name}}"
-    region: "{{region}}"
-    instance_id: "{{instance_id}}"
-    name: "s2-{{ role_type }} {{ epoch.stdout }}"
-    device_mapping:
-      - device_name: /dev/sda1
-        size: 20
-        delete_on_termination: true
-        volume_type: gp2
-      # - device_name: /dev/sdb
-      #   size: 20
-      #   delete_on_termination: false
-      #   volume_type: gp2
-    tags:
-      Environment: "{{ env }}"
-      Name: "s2-{{ role_type }}"
-      App: "{{ role_type }}"
-      Stream: 2
-      Version: "{{current_version | default('undefined') }}"
-  register: instance
+- debug: msg="{{role_image_version}}"
+  when: role_image_version is defined
+- debug: msg="{{base_image_version}}"
+  when: base_image_version is defined
 
-- name: Newly created ami
-  debug: msg="{{instance.image_id}}"
+- block:
+    - name: Create new base AMI image for {{ role_type }}
+      ec2_ami:
+        profile: "{{aws_account_name}}"
+        region: "{{region}}"
+        instance_id: "{{instance_id}}"
+        name: "s2-{{ role_type }} {{ epoch.stdout }}"
+        device_mapping:
+          - device_name: /dev/sda1
+            size: 20
+            delete_on_termination: true
+            volume_type: gp2
+          # - device_name: /dev/sdb
+          #   size: 20
+          #   delete_on_termination: false
+          #   volume_type: gp2
+        tags:
+          Environment: "{{ env }}"
+          Name: "s2-{{ role_type }}"
+          App: "{{ role_type }}"
+          Stream: 2
+          Version: "{{ current_version | default('undefined') }}"
+          base_image_version: "{{base_image_version}}"
+          KeepImage: "{{ keep_image|default('no') }}"
+      register: instance
+    - name: Newly created base ami image_id
+      debug: msg="{{instance.image_id}}"
+  when: base_image_version is defined
+
+- block:
+    - name: Create new complete AMI image for {{ role_type }}
+      ec2_ami:
+        profile: "{{aws_account_name}}"
+        region: "{{region}}"
+        instance_id: "{{instance_id}}"
+        name: "s2-{{ role_type }} {{ epoch.stdout }}"
+        device_mapping:
+          - device_name: /dev/sda1
+            size: 20
+            delete_on_termination: true
+            volume_type: gp2
+        tags:
+          Environment: "{{ env }}"
+          Name: "s2-{{ role_type }}"
+          App: "{{ role_type }}"
+          Stream: 2
+          Version: "{{ current_version | default('undefined') }}"
+          role_image_version: "{{role_image_version}}"
+          KeepImage: "{{ keep_image|default('no') }}"
+      register: instance
+    - name: Newly created role ami image_id
+      debug: msg="{{instance.image_id}}"
+  when: role_image_version is defined
 
 - name: find latest ami for {{ env }}
   ec2_ami_find:
@@ -75,7 +108,6 @@
     sort_order: descending
   # register: ami
 
-
 # - name: latest ami for {{ role_type }}
 #   debug: msg="{{ami.results[0].ami_id}}"
 
@@ -85,7 +117,11 @@
     instance_ids: "{{instance_id}}"
   when: terminate
 
+- name: wait for maximum 40 for newly ami image to be available
+  pause: seconds=40
+
 - name: Send notification message via Slack
   slack:
     token: "{{slack.token}}"
     msg: "New AMI created"
+...
