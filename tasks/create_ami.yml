@@ -117,8 +117,8 @@
     instance_ids: "{{instance_id}}"
   when: terminate
 
-- name: wait for maximum 40 for newly ami image to be available
-  pause: seconds=40
+- name: wait for maximum {{timeout_to_wait_for_image}} secs for newly ami image to be available
+  pause: seconds={{timeout_to_wait_for_image}}
 
 - name: Send notification message via Slack
   slack:
