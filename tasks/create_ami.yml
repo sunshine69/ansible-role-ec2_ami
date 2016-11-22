@@ -15,13 +15,12 @@
     instance_id: "{{ec2_sandbox.instances[0].id}}"
 
 - name: get the drupal version tag when we build role image
-  uri: url="http://{{ ec2_sandbox.instances[0].public_dns_name }}:7000" return_content=yes
-  register: drupal_version
+  include: "{{role_path}}/../../common_tasks/lookup_drupal_version.yml"
   when: role_type == 'drupal' and base_image_version is not defined
 
 - name: set a fact with the drupal version
   set_fact:
-    current_version: "{{drupal_version.json.version | default('undefined')}}"
+    current_version: "{{drupal_version | default('undefined')}}"
   when: role_type == 'drupal' and base_image_version is not defined
 
 - name: Get epoch time
