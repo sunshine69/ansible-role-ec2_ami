@@ -5,7 +5,7 @@
     profile: "{{aws_account_name}}"
     filters:
       instance-state-name: running
-      "tag:Name": "s2-master-ami-{{ role_type }}"
+      "tag:Name": "{{env}}-master-ami-{{ role_type }}"
       "tag:Stream": 2
       "tag:App": "{{ role_type }}"
   register: ec2_sandbox
