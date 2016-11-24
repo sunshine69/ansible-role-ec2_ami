@@ -110,11 +110,12 @@
 # - name: latest ami for {{ role_type }}
 #   debug: msg="{{ami.results[0].ami_id}}"
 
-- name: Terminating {{ env }}-role_type sandbox instance
+- name: Terminating {{ env }}-role_type sandbox instance, We keep the drupal master for int only
   ec2:
+    region: "{{region}}"
     state: absent
     instance_ids: "{{instance_id}}"
-  when: terminate
+  when: keep_sandbox is not defined and ( role_type != 'drupal' or env != 'int' )
 
 - name: wait for maximum {{timeout_to_wait_for_image}} secs for newly ami image to be available
   pause: seconds={{timeout_to_wait_for_image}}
