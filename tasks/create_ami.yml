@@ -15,7 +15,7 @@
     instance_id: "{{ec2_sandbox.instances[0].id}}"
 
 - name: get the drupal version tag when we build role image
-  include: "{{role_path}}/../../common_tasks/lookup_drupal_version.yml"
+  include: "{{role_path}}/../common/lookup_drupal_version.yml"
   when: role_type == 'drupal' and base_image_version is not defined
 
 - name: set a fact with the drupal version
