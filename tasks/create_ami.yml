@@ -14,13 +14,9 @@
   set_fact:
     instance_id: "{{ec2_sandbox.instances[0].id}}"
 
-- name: get the drupal version tag when we build role image
-  include: "{{role_path}}/../common/lookup_drupal_version.yml"
-  when: role_type == 'drupal'
-
 - name: set a fact with the drupal version
   set_fact:
-    current_version: "{{drupal_version | default('undefined')}}"
+    current_version: "{{ 'drupal_version'|lookup_redis('unknown') }}"
   when: role_type == 'drupal'
 
 - name: Get epoch time
