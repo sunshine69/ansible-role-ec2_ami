@@ -16,12 +16,12 @@
 
 - name: get the drupal version tag when we build role image
   include: "{{role_path}}/../common/lookup_drupal_version.yml"
-  when: role_type == 'drupal' and base_image_version is not defined
+  when: role_type == 'drupal'
 
 - name: set a fact with the drupal version
   set_fact:
     current_version: "{{drupal_version | default('undefined')}}"
-  when: role_type == 'drupal' and base_image_version is not defined
+  when: role_type == 'drupal'
 
 - name: Get epoch time
   shell: date +'%s'
