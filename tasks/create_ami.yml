@@ -40,7 +40,7 @@
         profile: "{{aws_account_name}}"
         region: "{{region}}"
         instance_id: "{{instance_id}}"
-        name: "s2-{{ role_type }} {{ epoch.stdout }}"
+        name: "{{ role_type }} {{ epoch.stdout }}"
         device_mapping:
           - device_name: /dev/sda1
             size: 20
@@ -52,7 +52,7 @@
           #   volume_type: gp2
         tags:
           Environment: "{{ env }}"
-          Name: "s2-{{ role_type }}"
+          Name: "{{ role_type }}"
           App: "{{ role_type }}"
           Stream: 2
           Version: "{{ current_version | default('undefined') }}"
@@ -69,7 +69,7 @@
         profile: "{{aws_account_name}}"
         region: "{{region}}"
         instance_id: "{{instance_id}}"
-        name: "s2-{{ role_type }} {{ epoch.stdout }}"
+        name: "{{ role_type }} {{ epoch.stdout }}"
         device_mapping:
           - device_name: /dev/sda1
             size: 20
@@ -77,7 +77,7 @@
             volume_type: gp2
         tags:
           Environment: "{{ env }}"
-          Name: "s2-{{ role_type }}"
+          Name: "{{ role_type }}"
           App: "{{ role_type }}"
           Stream: 2
           Version: "{{ current_version | default('undefined') }}"
@@ -94,7 +94,7 @@
     profile: "{{ aws_account_name }}"
     owner: self
     ami_tags:
-      Name: "s2-{{ role_type }}"
+      Name: "{{ role_type }}"
       App: "{{ role_type }}"
       Stream: 2
       Version: 'get tag from build artefact'
@@ -111,7 +111,7 @@
     profile: "{{ aws_account_name }}"
     state: absent
     instance_ids: [ "{{instance_id}}" ]
-  when: keep_sandbox is not defined and ( role_type != 'drupal' or env != 's2-int' )
+  when: keep_sandbox is not defined and ( role_type != 'drupal' or env != 'int' )
 
 - name: wait for maximum {{timeout_to_wait_for_image}} secs for newly ami image to be available
   pause: seconds={{timeout_to_wait_for_image}}
