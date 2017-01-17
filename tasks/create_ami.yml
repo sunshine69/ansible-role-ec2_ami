@@ -14,10 +14,9 @@
   set_fact:
     instance_id: "{{ec2_sandbox.instances[0].id}}"
 
-- name: set a fact with the drupal version
+- name: set a fact with the {{role_type}} version
   set_fact:
-    current_version: "{{ 'drupal_version'|lookup_redis('unknown') }}"
-  when: role_type == 'drupal'
+    current_version: "{{ ( role_type + '_version' ) | lookup_redis('unknown') }}"
 
 - name: Get epoch time
   shell: date +'%s'
