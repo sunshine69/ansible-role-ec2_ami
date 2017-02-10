@@ -1,123 +1,82 @@
 ---
-- name: Get the sandbox instance for {{ env }}-{{ role_type }}
+- name: set ami builder search tag dictionary
+  set_fact:
+  args:
+    ami_builder_search_tags:
+      "{{ ami_builder_search_tags|default({})|combine({item.key: item.value}) }}"
+  with_dict:
+    instance-state-name: running
+    "tag:Environment": "{{ env|default() }}"
+    "tag:App": "{{ role_type|default() }}"
+    "tag:Stream": 2
+    "tag:BuildLayer": "{{ ami_build_layer }}"
+    "tag:Platform": "{{ platform|default() }}"
+  when: item.value != ""
+
+- name: Get the AMI build instance
   ec2_remote_facts:
-    region: "{{region}}"
-    profile: "{{aws_account_name}}"
-    filters:
-      instance-state-name: running
-      "tag:Name": "{{env}}-master-ami-{{ role_type }}"
-      "tag:Stream": 2
-      "tag:App": "{{ role_type }}"
+    region: "{{ region }}"
+    profile: "{{ aws_account_name }}"
+    filters: "{{ ami_builder_search_tags }}"
   register: ec2_sandbox
 
-- name: set the instance id fact
+- name: set the instance fact
   set_fact:
-    instance_id: "{{ec2_sandbox.instances[0].id}}"
+    instance: "{{ec2_sandbox.instances[0]}}"
 
-- name: set a fact with the {{role_type}} version
-  set_fact:
-    current_version: "{{ ( role_type + '_version' ) | lookup_redis('unknown') }}"
-
-- name: Get epoch time
-  shell: date +'%s'
-  register: epoch
+- name: Get human readable time
+  shell: date +'%Y%m%d-%H%M'
+  register: timestamp
   changed_when: false
 
-- name: Send notification message via Slack
-  slack:
-    token: "{{slack.token}}"
-    msg: "Creating new {{ role_type }} ami  - Version {{current_version |default('undefined')}}"
-  when: role_type == 'drupal'
-
-- debug: msg="{{role_image_version}}"
-  when: role_image_version is defined
-- debug: msg="{{base_image_version}}"
-  when: base_image_version is defined
-
-- block:
-    - name: Create new base AMI image for {{ role_type }}
-      ec2_ami:
-        profile: "{{aws_account_name}}"
-        region: "{{region}}"
-        instance_id: "{{instance_id}}"
-        name: "{{ role_type }} {{ epoch.stdout }}"
-        device_mapping:
-          - device_name: /dev/sda1
-            size: 20
-            delete_on_termination: true
-            volume_type: gp2
-          # - device_name: /dev/sdb
-          #   size: 20
-          #   delete_on_termination: false
-          #   volume_type: gp2
-        tags:
-          Environment: "{{ env }}"
-          Name: "{{ role_type }}"
-          App: "{{ role_type }}"
-          Stream: 2
-          Version: "{{ current_version | default('undefined') }}"
-          base_image_version: "{{base_image_version}}"
-          KeepImage: "{{ keep_image|default('no') }}"
-      register: instance
-    - name: Newly created base ami image_id
-      debug: msg="{{instance.image_id}}"
-  when: base_image_version is defined
-
-- block:
-    - name: Create new complete AMI image for {{ role_type }}
-      ec2_ami:
-        profile: "{{aws_account_name}}"
-        region: "{{region}}"
-        instance_id: "{{instance_id}}"
-        name: "{{ role_type }} {{ epoch.stdout }}"
-        device_mapping:
-          - device_name: /dev/sda1
-            size: 20
-            delete_on_termination: true
-            volume_type: gp2
-        tags:
-          Environment: "{{ env }}"
-          Name: "{{ role_type }}"
-          App: "{{ role_type }}"
-          Stream: 2
-          Version: "{{ current_version | default('undefined') }}"
-          role_image_version: "{{role_image_version}}"
-          KeepImage: "{{ keep_image|default('no') }}"
-      register: instance
-    - name: Newly created role ami image_id
-      debug: msg="{{instance.image_id}}"
-  when: role_image_version is defined
-
-- name: find latest ami for {{ env }}
-  ec2_ami_find:
-    region: "{{region}}"
-    profile: "{{ aws_account_name }}"
-    owner: self
+- name: create tags dictionary (avoids empty tags)
+  set_fact:
+  args:
     ami_tags:
-      Name: "{{ role_type }}"
-      App: "{{ role_type }}"
-      Stream: 2
-      Version: 'get tag from build artefact'
-    sort: creationDate
-    sort_order: descending
-  # register: ami
+      "{{ ami_tags|default({})|combine({item.key: item.value}) }}"
+  with_dict:
+    Environment: "{{ env|default() }}"
+    Name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
+    App: "{{ role_type|default() }}"
+    Stream: 2
+    Version: "{{ current_version|default() }}"
+    AmiParentImage: "{{ instance.tags.AmiParentImage }}"
+    AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
+    KeepImage: "{{ keep_image|default('no') }}"
+    BuildLayer: "{{ ami_build_layer }}"
+    Platform: "{{ platform|default() }}"
+  when: item.value != ""
 
-# - name: latest ami for {{ role_type }}
-#   debug: msg="{{ami.results[0].ami_id}}"
+- debug:
+    var: ami_tags
+    verbosity: 2
 
-- name: Terminating {{ env }}-role_type sandbox instance
+- name: Create new AMI image
+  ec2_ami:
+    profile: "{{ aws_account_name }}"
+    region: "{{ region }}"
+    instance_id: "{{ instance.id }}"
+    name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
+    tags: "{{ ami_tags }}"
+    device_mapping:
+      - device_name: /dev/sda1
+        size: 20
+        delete_on_termination: true
+        volume_type: gp2
+      #   volume_type: gp2
+    wait: yes
+    wait_timeout: "{{ timeout_to_wait_for_image }}"
+  register: ami
+
+- name: latest ami for {{ ami_build_layer }}
+  debug:
+    var: ami.image_id
+    verbosity: 2
+
+- name: Terminating ami builder instance
   ec2:
     region: "{{region}}"
     profile: "{{ aws_account_name }}"
     state: absent
-    instance_ids: [ "{{instance_id}}" ]
+    instance_ids: [ "{{instance.id}}" ]
   when: keep_sandbox is not defined
-
-- name: wait for maximum {{timeout_to_wait_for_image}} secs for newly ami image to be available
-  pause: seconds={{timeout_to_wait_for_image}}
-
-- name: Send notification message via Slack
-  slack:
-    token: "{{slack.token}}"
-    msg: "New AMI created"
-...

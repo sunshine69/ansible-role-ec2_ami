@@ -1,1 +1,2 @@
-timeout_to_wait_for_image: 90
+timeout_to_wait_for_image: 300
+ami_tags: {}
