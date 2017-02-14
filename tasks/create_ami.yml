@@ -29,6 +29,20 @@
   register: timestamp
   changed_when: false
 
+- debug:
+    var: item
+  with_dict:
+    Environment: "{{ env|default() }}"
+    Name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
+    App: "{{ role_type|default() }}"
+    Stream: 2
+    Version: "{{ current_version|default() }}"
+    AmiParentImage: "{{ instance.tags.AmiParentImage }}"
+    AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
+    KeepImage: "{{ keep_image|default('no') }}"
+    BuildLayer: "{{ ami_build_layer }}"
+    Platform: "{{ platform|default() }}"
+
 - name: create tags dictionary (avoids empty tags)
   set_fact:
   args:
