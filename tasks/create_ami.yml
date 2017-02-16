@@ -87,6 +87,9 @@
     var: ami.image_id
     verbosity: 2
 
+- name: wait for maximum wait_for_image_tobe_ready (default 90 secs) for newly ami image to be available
+  pause: seconds={{ wait_for_image_tobe_ready | default(90) }}
+
 - name: Terminating ami builder instance
   ec2:
     region: "{{region}}"
