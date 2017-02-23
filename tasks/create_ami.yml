@@ -8,7 +8,6 @@
     instance-state-name: running
     "tag:Environment": "{{ env|default() }}"
     "tag:App": "{{ role_type|default() }}"
-    "tag:Stream": 2
     "tag:BuildLayer": "{{ ami_build_layer }}"
     "tag:Platform": "{{ platform|default() }}"
   when: item.value != ""
@@ -35,11 +34,9 @@
     Environment: "{{ env|default() }}"
     Name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
     App: "{{ role_type|default() }}"
-    Stream: 2
     Version: "{{ current_version|default() }}"
     AmiParentImage: "{{ instance.tags.AmiParentImage }}"
     AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
-    KeepImage: "{{ keep_image|default('no') }}"
     BuildLayer: "{{ ami_build_layer }}"
     Platform: "{{ platform|default() }}"
 
@@ -52,11 +49,10 @@
     Environment: "{{ env|default() }}"
     Name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
     App: "{{ role_type|default() }}"
-    Stream: 2
     Version: "{{ current_version|default() }}"
     AmiParentImage: "{{ instance.tags.AmiParentImage }}"
     AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
-    KeepImage: "{{ keep_image|default('no') }}"
+    AmiParentVersion: "{{ instance.tags.AmiParentVersion|default() }}"
     BuildLayer: "{{ ami_build_layer }}"
     Platform: "{{ platform|default() }}"
   when: item.value != ""
