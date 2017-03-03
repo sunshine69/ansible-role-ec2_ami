@@ -7,7 +7,7 @@
   with_dict:
     instance-state-name: running
     "tag:Environment": "{{ env|default() }}"
-    "tag:App": "{{ role_type|default() }}"
+    "tag:Application": "{{ role_type|default() }}"
     "tag:BuildLayer": "{{ ami_build_layer }}"
     "tag:Platform": "{{ platform|default() }}"
   when: item.value != ""
@@ -33,7 +33,7 @@
   with_dict:
     Environment: "{{ env|default() }}"
     Name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
-    App: "{{ role_type|default() }}"
+    Application: "{{ role_type|default() }}"
     Version: "{{ current_version|default() }}"
     AmiParentImage: "{{ instance.tags.AmiParentImage }}"
     AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
@@ -48,7 +48,7 @@
   with_dict:
     Environment: "{{ env|default() }}"
     Name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
-    App: "{{ role_type|default() }}"
+    Application: "{{ role_type|default() }}"
     Version: "{{ current_version|default() }}"
     AmiParentImage: "{{ instance.tags.AmiParentImage }}"
     AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
