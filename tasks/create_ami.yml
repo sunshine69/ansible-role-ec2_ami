@@ -15,7 +15,7 @@
 - name: Get the AMI build instance
   ec2_remote_facts:
     region: "{{ region }}"
-    profile: "{{ aws_account_name }}"
+    profile: "{{ ami_builder_account }}"
     filters: "{{ ami_builder_search_tags }}"
   register: ec2_sandbox
 
@@ -63,7 +63,7 @@
 
 - name: Create new AMI image
   ec2_ami:
-    profile: "{{ aws_account_name }}"
+    profile: "{{ ami_builder_account }}"
     region: "{{ region }}"
     instance_id: "{{ instance.id }}"
     name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
@@ -76,6 +76,8 @@
       #   volume_type: gp2
     wait: yes
     wait_timeout: "{{ timeout_to_wait_for_image }}"
+    launch_permissions:
+      user_ids: "{{ ami_sharing[profile]|default([]) }}"
   register: ami
 
 - name: latest ami for {{ ami_build_layer }}
@@ -89,7 +91,7 @@
 - name: Terminating ami builder instance
   ec2:
     region: "{{region}}"
-    profile: "{{ aws_account_name }}"
+    profile: "{{ ami_builder_account }}"
     state: absent
     instance_ids: [ "{{instance.id}}" ]
   when: keep_sandbox is not defined
