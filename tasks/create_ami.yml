@@ -95,3 +95,18 @@
     state: absent
     instance_ids: [ "{{instance.id}}" ]
   when: keep_sandbox is not defined
+
+- name: Remove ephemeral EC2 key
+  ec2_key:
+    region: "{{region}}"
+    profile: "{{ ami_builder_account }}"
+    state: absent
+    name: "{{ ec2_key_pair }}"
+
+- name: Remove ephemeral ssh key
+  file:
+    name: "~/.ssh/{{ item }}"
+    state: absent
+  with_items:
+    - "{{ ec2_key_pair }}"
+    - "{{ ec2_key_pair }}.pub"
