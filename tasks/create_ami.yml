@@ -15,7 +15,7 @@
 - name: Get the AMI build instance
   ec2_remote_facts:
     region: "{{ region }}"
-    profile: "{{ ami_builder_account }}"
+    profile: "{{ profile|default(omit) }}"
     filters: "{{ ami_builder_search_tags }}"
   register: ec2_sandbox
 
@@ -63,7 +63,7 @@
 
 - name: Create new AMI image
   ec2_ami:
-    profile: "{{ ami_builder_account }}"
+    profile: "{{ profile|default(omit) }}"
     region: "{{ region }}"
     instance_id: "{{ instance.id }}"
     name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
@@ -77,7 +77,7 @@
     wait: yes
     wait_timeout: "{{ timeout_to_wait_for_image }}"
     launch_permissions:
-      user_ids: "{{ ami_sharing[profile]|default([]) }}"
+      user_ids: "{{ ami_sharing[aws_account_name]|default([]) }}"
   register: ami
 
 - name: latest ami for {{ ami_build_layer }}
@@ -91,7 +91,7 @@
 - name: Terminating ami builder instance
   ec2:
     region: "{{region}}"
-    profile: "{{ ami_builder_account }}"
+    profile: "{{ profile|default(omit) }}"
     state: absent
     instance_ids: [ "{{instance.id}}" ]
   when: keep_sandbox is not defined
@@ -99,7 +99,7 @@
 - name: Remove ephemeral EC2 key
   ec2_key:
     region: "{{region}}"
-    profile: "{{ ami_builder_account }}"
+    profile: "{{ profile|default(omit) }}"
     state: absent
     name: "{{ ec2_key_pair }}"
 
