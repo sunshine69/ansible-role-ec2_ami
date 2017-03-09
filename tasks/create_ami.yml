@@ -102,6 +102,7 @@
     profile: "{{ profile|default(omit) }}"
     state: absent
     name: "{{ ec2_key_pair }}"
+  when: generate_ephemeral_key|bool
 
 - name: Remove ephemeral ssh key
   file:
@@ -110,3 +111,4 @@
   with_items:
     - "{{ ec2_key_pair }}"
     - "{{ ec2_key_pair }}.pub"
+  when: generate_ephemeral_key|bool
