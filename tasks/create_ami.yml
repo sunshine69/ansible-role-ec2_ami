@@ -39,6 +39,7 @@
     AmiParentImageName: "{{ instance.tags.AmiParentImageName }}"
     BuildLayer: "{{ ami_build_layer }}"
     Platform: "{{ platform|default() }}"
+    Branch: "{{ branch|default() }}"
 
 - name: create tags dictionary (avoids empty tags)
   set_fact:
@@ -55,6 +56,7 @@
     AmiParentVersion: "{{ instance.tags.AmiParentVersion|default() }}"
     BuildLayer: "{{ ami_build_layer }}"
     Platform: "{{ platform|default() }}"
+    Branch: "{{ branch|default() }}"
   when: item.value != ""
 
 - debug:
