@@ -10,6 +10,7 @@
     "tag:Application": "{{ role_type|default() }}"
     "tag:BuildLayer": "{{ ami_build_layer }}"
     "tag:Platform": "{{ platform|default() }}"
+    "tag:Builder": "True"
   when: item.value != ""
 
 - name: Get the AMI build instance
