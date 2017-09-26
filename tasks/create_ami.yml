@@ -25,7 +25,7 @@
     instance: "{{ec2_sandbox.instances[0]}}"
 
 - name: Get human readable time
-  shell: date +'%Y%m%d-%H%M'
+  comand: date +'%Y%m%d-%H%M'
   register: timestamp
   changed_when: false
 
