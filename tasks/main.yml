@@ -1,4 +1,4 @@
 ---
 
-- { include: create_ami.yml }
+- import_tasks: create_ami.yml
 # - { include: delete_ami.yml, when: stage == "delete" }
