@@ -1,2 +1,8 @@
 timeout_to_wait_for_image: 300
 ami_tags: {}
+
+ec2_ami_volumes:
+  - device_name: /dev/sda1
+    size: 20
+    delete_on_termination: true
+    volume_type: gp2

@@ -73,12 +73,7 @@
     instance_id: "{{ instance.id }}"
     name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
     tags: "{{ ami_tags }}"
-    device_mapping:
-      - device_name: /dev/sda1
-        size: 20
-        delete_on_termination: true
-        volume_type: gp2
-      #   volume_type: gp2
+    device_mapping: "{{ ec2_ami_volumes }}"
     wait: yes
     wait_timeout: "{{ timeout_to_wait_for_image }}"
     launch_permissions:
