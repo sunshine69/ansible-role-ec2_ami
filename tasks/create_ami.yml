@@ -14,7 +14,7 @@
   when: item.value != ""
 
 - name: Get the AMI build instance
-  ec2_remote_facts:
+  ec2_instance_facts:
     region: "{{ region }}"
     profile: "{{ profile|default(omit) }}"
     filters: "{{ ami_builder_search_tags }}"
