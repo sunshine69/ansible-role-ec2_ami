@@ -70,7 +70,7 @@
   ec2_ami:
     profile: "{{ profile|default(omit) }}"
     region: "{{ region }}"
-    instance_id: "{{ instance.id }}"
+    instance_id: "{{ instance.instance_id }}"
     name: "{{ ami_image_name }}-{{ timestamp.stdout }}"
     tags: "{{ ami_tags }}"
     device_mapping: "{{ ec2_ami_volumes }}"
