@@ -91,7 +91,7 @@
     profile: "{{ profile|default(omit) }}"
     state: absent
     wait: yes
-    wait_timeout: "90"
+    wait_timeout: "300"
     instance_ids: [ "{{ instance.instance_id }}" ]
   when: keep_sandbox is not defined
 
