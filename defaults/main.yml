@@ -1,4 +1,4 @@
-timeout_to_wait_for_image: 300
+timeout_to_wait_for_image: 600
 ami_tags: {}
 
 ec2_ami_volumes:
