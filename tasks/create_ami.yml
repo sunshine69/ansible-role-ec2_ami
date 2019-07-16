@@ -98,6 +98,38 @@
 - name: wait for maximum wait_for_image_tobe_ready (default 45 secs) for newly ami image to be available
   pause: seconds={{ wait_for_image_tobe_ready | default(45) }}
 
+- block:
+    - name: create tags dictionary (avoids empty tags) for encrypted AMI
+      set_fact:
+      args:
+        ami_enc_tags:
+          "{{ ami.tags|combine({'Encryption': 'enabled'}) }}"
+
+    - debug:
+        var: ami_enc_tags
+        verbosity: 2
+
+    - name: create a encrypted AMI
+      ec2_ami_copy:
+        source_image_id: "{{ ami.image_id }}"
+        source_region: "{{ region }}"
+        tags: "{{ ami_enc_tags }}"
+        tag_equality: yes
+        region: "{{ region }}"
+        name: "{{ ami.name }}-enc"
+        profile: "{{ profile|default(omit) }}"
+        encrypted: yes
+        wait: yes
+        wait_timeout: 900
+      register: enc_ami
+
+    - name: latest encrypted ami for {{ ami_build_layer }}
+      debug:
+        var: enc_ami.image_id
+        verbosity: 2
+
+  when: ami_encryption|default(False)
+
 - name: Remove ephemeral EC2 key
   ec2_key:
     region: "{{region}}"
