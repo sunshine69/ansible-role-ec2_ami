@@ -42,6 +42,7 @@
     BuildLayer: "{{ ami_build_layer }}"
     Platform: "{{ platform|default() }}"
     Branch: "{{ branch|default() }}"
+    Encryption: "{{ instance.tags.Encryption|default('disabled') }}"
 
 - name: create tags dictionary (avoids empty tags)
   set_fact:
@@ -60,6 +61,7 @@
     BuildLayer: "{{ ami_build_layer }}"
     Platform: "{{ platform|default() }}"
     Branch: "{{ branch|default() }}"
+    Encryption: "{{ instance.tags.Encryption|default('disabled') }}"
   when: item.value != ""
 
 - debug:
@@ -128,7 +130,7 @@
         var: enc_ami.image_id
         verbosity: 2
 
-  when: ami_encryption|default(False)
+  when: ami_encryption|default(False) and instance.tags.Encryption|default('disabled') == 'disabled'
 
 - name: Remove ephemeral EC2 key
   ec2_key:
